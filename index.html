@@ -43,11 +43,9 @@
   }
   .face-front { justify-content: center; align-items: center; text-align: center; }
   .face-back  { transform: rotateY(180deg); justify-content: space-between; }
-
   .face-label { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 1rem; }
   .meaning-text { font-family: 'Lora', serif; font-size: 1.35rem; line-height: 1.55; color: var(--ink); }
   .flip-hint { margin-top: 1.5rem; font-size: 0.75rem; color: var(--ink-3); }
-
   .back-word { font-family: 'Lora', serif; font-size: 2rem; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); line-height: 1.2; }
   .back-pos { display: inline-block; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); background: var(--accent-light); padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
   .back-example { font-family: 'Lora', serif; font-style: italic; font-size: 1rem; line-height: 1.65; color: var(--ink-2); border-left: 2px solid var(--accent); padding-left: 1rem; margin-top: auto; }
@@ -95,6 +93,9 @@
 </div>
 
 <script>
+/* Published CSV URL — works from https:// pages, CORS-free */
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPzLzjhM4w4SaXPEAzRcFEXUgirKWsT8XNY4ju33WPqZg-vuZoi1Kpj2TCCSDdqoA6oTPkknLvjKle/pub?gid=271629694&single=true&output=csv';
+
 let cards=[], current=0, flipped=false, colKeys=null;
 
 /* ── CSV parser ── */
@@ -113,7 +114,7 @@ function parseCSV(text) {
     return out;
   };
   const headers = parseRow(lines[0]).map(h => h.toLowerCase().trim());
-  console.log('Headers detected:', headers);
+  console.log('Headers:', headers);
   return lines.slice(1).filter(l => l.trim()).map(l => {
     const vals=parseRow(l), obj={};
     headers.forEach((h,i) => obj[h] = vals[i] !== undefined ? vals[i].trim() : '');
@@ -135,7 +136,7 @@ function detectKeys(sample) {
     example: findCol(hs, ['example','sentence','usage','ex']),
     pos:     findCol(hs, ['pos','part','type','品詞','class']),
   };
-  console.log('Column mapping:', colKeys);
+  console.log('Mapped columns:', colKeys);
   return colKeys;
 }
 
@@ -208,22 +209,19 @@ async function init() {
   document.getElementById('app').innerHTML = `<div class="status">Fetching your vocabulary…<div class="dot-pulse"><span></span><span></span><span></span></div></div>`;
   document.getElementById('subtitle').textContent = 'Loading Vocab sheet…';
   try {
-    const res = await fetch('/cards');
-    if (!res.ok) throw new Error(`Server returned HTTP ${res.status}`);
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
     cards = parseCSV(text);
-    if (!cards.length) throw new Error('Sheet loaded but no rows found — check the Vocab tab has data.');
+    if (!cards.length) throw new Error('Sheet loaded but no rows found.');
     colKeys = null;
     document.getElementById('subtitle').textContent = `${cards.length} cards · live from Google Sheets ✓`;
     render();
   } catch (err) {
-    document.getElementById('subtitle').textContent = 'Error';
+    document.getElementById('subtitle').textContent = 'Could not load';
     document.getElementById('app').innerHTML = `
       <div class="status error">
-        <strong>Could not load cards.</strong><br>
-        ${esc(err.message)}<br><br>
-        Make sure <code>server.js</code> is running:<br>
-        <code>node server.js</code><br><br>
+        <strong>Could not load the sheet.</strong><br>${esc(err.message)}<br><br>
         <button class="btn" onclick="init()" style="margin:0 auto">↺ Try again</button>
       </div>`;
   }
