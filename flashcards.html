@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F5F2EB; --surface: #FDFCF8; --ink: #1A1814; --ink-2: #5A5650; --ink-3: #9A958E;
+    --accent: #2D5A3D; --accent-light: #EAF3DE; --border: rgba(26,24,20,0.12);
+    --shadow: 0 2px 24px rgba(26,24,20,0.10), 0 1px 4px rgba(26,24,20,0.08); --dur: 0.55s;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1A1814; --surface: #232019; --ink: #F0EDE4; --ink-2: #AAA59C; --ink-3: #6A655E;
+      --accent: #7EC898; --accent-light: #173404; --border: rgba(240,237,228,0.10);
+      --shadow: 0 2px 24px rgba(0,0,0,0.40);
+    }
+  }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:2rem 1rem 4rem; }
+  header { text-align:center; margin-bottom:2.5rem; }
+  header h1 { font-family:'Lora',serif; font-size:1.75rem; font-weight:600; letter-spacing:-0.02em; }
+  header p { font-size:0.85rem; color:var(--ink-3); margin-top:0.35rem; }
+
+  .progress-wrap { width:min(520px,100%); margin-bottom:1.25rem; display:flex; align-items:center; gap:12px; }
+  .progress-bar { flex:1; height:3px; background:var(--border); border-radius:99px; overflow:hidden; }
+  .progress-fill { height:100%; background:var(--accent); border-radius:99px; transition:width 0.3s; }
+  .progress-label { font-size:0.8rem; color:var(--ink-3); white-space:nowrap; font-variant-numeric:tabular-nums; }
+
+  .scene { width:min(520px,100%); height:320px; perspective:1000px; cursor:pointer; margin-bottom:1.5rem; }
+  .card { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform var(--dur) cubic-bezier(0.4,0,0.2,1); }
+  .card.flipped { transform:rotateY(180deg); }
+  .face {
+    position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    background:var(--surface); border-radius:20px; border:1px solid var(--border);
+    box-shadow:var(--shadow); padding:2.5rem 2.25rem; display:flex; flex-direction:column;
+  }
+  .face-front { justify-content:center; align-items:center; text-align:center; }
+  .face-back { transform:rotateY(180deg); justify-content:space-between; }
+  .face-label { font-size:0.7rem; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-3); margin-bottom:1rem; }
+  .meaning-text { font-family:'Lora',serif; font-size:1.35rem; line-height:1.55; color:var(--ink); }
+  .flip-hint { margin-top:1.5rem; font-size:0.75rem; color:var(--ink-3); }
+  .back-word { font-family:'Lora',serif; font-size:2rem; font-weight:600; letter-spacing:-0.02em; color:var(--ink); line-height:1.2; }
+  .back-pos { display:inline-block; font-size:0.72rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); background:var(--accent-light); padding:2px 8px; border-radius:4px; margin-top:6px; }
+  .back-example { font-family:'Lora',serif; font-style:italic; font-size:1rem; line-height:1.65; color:var(--ink-2); border-left:2px solid var(--accent); padding-left:1rem; margin-top:auto; }
+  .back-example-label { font-family:'DM Sans',sans-serif; font-style:normal; font-size:0.68rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-3); margin-bottom:0.5rem; display:block; }
+
+  .controls { display:flex; align-items:center; gap:12px; width:min(520px,100%); }
+  .btn {
+    height:42px; padding:0 1.25rem; border:1px solid var(--border); background:var(--surface);
+    color:var(--ink); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.85rem;
+    font-weight:500; cursor:pointer; transition:background 0.15s,border-color 0.15s,opacity 0.15s;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn:hover:not(:disabled) { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
+  .btn:active:not(:disabled) { transform:scale(0.97); }
+  .btn:disabled { opacity:0.3; cursor:not-allowed; }
+  .btn-flip { flex:1; background:var(--accent); border-color:var(--accent); color:white; }
+  .btn-flip:hover { opacity:0.88; }
+  .row-btns { display:flex; gap:10px; width:min(520px,100%); margin-top:0.85rem; }
+  .btn-sm { height:36px; font-size:0.75rem; padding:0 0.85rem; border-radius:8px; flex:1; }
+
+  .keyboard-hint { text-align:center; font-size:0.72rem; color:var(--ink-3); margin-top:1rem; }
+  kbd { display:inline-block; padding:1px 5px; border:1px solid var(--border); border-radius:4px; font-family:'DM Sans',sans-serif; font-size:0.65rem; color:var(--ink-3); }
+
+  .status { text-align:center; padding:3rem 1rem; color:var(--ink-2); font-size:0.9rem; line-height:1.8; width:min(480px,100%); }
+  .status.error { color:#A32D2D; }
+  .dot-pulse { display:inline-flex; gap:5px; margin-top:0.75rem; }
+  .dot-pulse span { width:6px; height:6px; border-radius:50%; background:var(--ink-3); animation:pulse 1.2s infinite ease-in-out; }
+  .dot-pulse span:nth-child(2) { animation-delay:0.2s; }
+  .dot-pulse span:nth-child(3) { animation-delay:0.4s; }
+  @keyframes pulse { 0%,80%,100%{opacity:0.3;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>English Flashcards</h1>
+  <p id="subtitle">Loading Vocab sheet…</p>
+</header>
+
+<div id="app">
+  <div class="status">
+    Fetching your vocabulary…
+    <div class="dot-pulse"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<script>
+const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPzLzjhM4w4SaXPEAzRcFEXUgirKWsT8XNY4ju33WPqZg-vuZoi1Kpj2TCCSDdqoA6oTPkknLvjKle/pub?gid=271629694&single=true&output=csv';
+
+/* Try direct fetch first, then fall back to two CORS proxies */
+const FETCH_URLS = [
+  SHEET_CSV,
+  'https://corsproxy.io/?' + encodeURIComponent(SHEET_CSV),
+  'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEET_CSV),
+];
+
+let cards=[], current=0, flipped=false, colKeys=null;
+
+/* ── CSV parser ── */
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const parseRow = row => {
+    const out=[]; let cur='', inQ=false;
+    for (let i=0; i<row.length; i++) {
+      const c=row[i];
+      if (c==='"' && !inQ) { inQ=true; continue; }
+      if (c==='"' && inQ) { if(row[i+1]==='"'){cur+='"';i++;} else inQ=false; continue; }
+      if (c===',' && !inQ) { out.push(cur.trim()); cur=''; continue; }
+      cur+=c;
+    }
+    out.push(cur.trim());
+    return out;
+  };
+  const headers = parseRow(lines[0]).map(h => h.toLowerCase().trim());
+  console.log('Columns:', headers);
+  return lines.slice(1).filter(l=>l.trim()).map(l => {
+    const vals=parseRow(l), obj={};
+    headers.forEach((h,i) => obj[h] = vals[i] !== undefined ? vals[i].trim() : '');
+    return obj;
+  }).filter(r => Object.values(r).some(v=>v));
+}
+
+/* ── Try URLs in sequence ── */
+async function fetchWithFallback() {
+  let lastErr;
+  for (const url of FETCH_URLS) {
+    try {
+      console.log('Trying:', url.slice(0,60) + '…');
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      if (!text.trim()) throw new Error('Empty response');
+      return text;
+    } catch(e) {
+      console.warn('Failed:', e.message);
+      lastErr = e;
+    }
+  }
+  throw lastErr;
+}
+
+/* ── Column detection ── */
+function findCol(hs, aliases) {
+  for (const a of aliases) { const h=hs.find(k=>k.includes(a)); if(h!==undefined) return h; }
+  return '';
+}
+function detectKeys(sample) {
+  if (colKeys) return colKeys;
+  const hs = Object.keys(sample);
+  colKeys = {
+    word:    findCol(hs, ['word','term','vocab','english','英語','expression']) || hs[0] || '',
+    meaning: findCol(hs, ['meaning','definition','japanese','日本語','訳','gloss','desc','translation']) || hs[1] || '',
+    example: findCol(hs, ['example','sentence','usage','ex']),
+    pos:     findCol(hs, ['pos','part','type','品詞','class']),
+  };
+  console.log('Mapped:', colKeys);
+  return colKeys;
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function doFlip() {
+  flipped = !flipped;
+  const c=document.getElementById('card'), b=document.getElementById('flipBtn');
+  if(c) c.classList.toggle('flipped', flipped);
+  if(b) b.textContent = flipped ? 'Show meaning' : 'Reveal word';
+}
+function go(d) { current=Math.max(0,Math.min(cards.length-1,current+d)); flipped=false; render(); }
+
+function render() {
+  const app=document.getElementById('app');
+  const card=cards[current], k=detectKeys(card);
+  const word=card[k.word]||'', meaning=card[k.meaning]||'', example=card[k.example]||'', pos=card[k.pos]||'';
+  const pct=((current+1)/cards.length*100).toFixed(1);
+
+  app.innerHTML = `
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <span class="progress-label">${current+1} / ${cards.length}</span>
+    </div>
+    <div class="scene" id="scene">
+      <div class="card${flipped?' flipped':''}" id="card">
+        <div class="face face-front">
+          <div class="face-label">meaning</div>
+          <p class="meaning-text">${meaning ? esc(meaning) : '<em style="opacity:0.35">—</em>'}</p>
+          <div class="flip-hint">↻ tap to reveal the word</div>
+        </div>
+        <div class="face face-back">
+          <div>
+            <div class="face-label">word</div>
+            <div class="back-word">${esc(word)}</div>
+            ${pos ? `<span class="back-pos">${esc(pos)}</span>` : ''}
+          </div>
+          ${example ? `<div class="back-example"><span class="back-example-label">example</span>${esc(example)}</div>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn" id="prevBtn" ${current===0?'disabled':''}>← Prev</button>
+      <button class="btn btn-flip" id="flipBtn">${flipped?'Show meaning':'Reveal word'}</button>
+      <button class="btn" id="nextBtn" ${current===cards.length-1?'disabled':''}>Next →</button>
+    </div>
+    <div class="row-btns">
+      <button class="btn btn-sm" id="shuffleBtn">⇄ Shuffle</button>
+      <button class="btn btn-sm" id="reloadBtn">↺ Sync sheet</button>
+    </div>
+    <p class="keyboard-hint"><kbd>Space</kbd> flip &nbsp;&nbsp; <kbd>←</kbd> prev &nbsp;&nbsp; <kbd>→</kbd> next</p>
+  `;
+
+  document.getElementById('scene').addEventListener('click', doFlip);
+  document.getElementById('flipBtn').addEventListener('click', e=>{e.stopPropagation();doFlip();});
+  document.getElementById('prevBtn').addEventListener('click', ()=>go(-1));
+  document.getElementById('nextBtn').addEventListener('click', ()=>go(1));
+  document.getElementById('shuffleBtn').addEventListener('click', ()=>{ cards=shuffle(cards); current=0; flipped=false; render(); });
+  document.getElementById('reloadBtn').addEventListener('click', ()=>{ cards=[]; colKeys=null; init(); });
+}
+
+document.addEventListener('keydown', e => {
+  if (!cards.length) return;
+  if (e.key===' '||e.key==='Enter') { e.preventDefault(); doFlip(); }
+  if (e.key==='ArrowRight') go(1);
+  if (e.key==='ArrowLeft') go(-1);
+});
+
+async function init() {
+  document.getElementById('app').innerHTML = `<div class="status">Fetching your vocabulary…<div class="dot-pulse"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('subtitle').textContent = 'Loading Vocab sheet…';
+  try {
+    const text = await fetchWithFallback();
+    cards = parseCSV(text);
+    if (!cards.length) throw new Error('Sheet loaded but no rows were found.');
+    colKeys = null;
+    document.getElementById('subtitle').textContent = `${cards.length} cards · live from Google Sheets ✓`;
+    render();
+  } catch (err) {
+    document.getElementById('subtitle').textContent = 'Could not load sheet';
+    document.getElementById('app').innerHTML = `
+      <div class="status error">
+        <strong>Could not load the sheet.</strong><br>
+        ${esc(err.message)}<br><br>
+        <button class="btn" onclick="init()" style="margin:0 auto">↺ Try again</button>
+      </div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
