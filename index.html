@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>English Flashcards</title>
+<title>🗂️ English Flashcards</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -11,77 +11,177 @@
     --bg: #F5F2EB; --surface: #FDFCF8; --ink: #1A1814; --ink-2: #5A5650; --ink-3: #9A958E;
     --accent: #2D5A3D; --accent-light: #EAF3DE; --border: rgba(26,24,20,0.12);
     --shadow: 0 2px 24px rgba(26,24,20,0.10), 0 1px 4px rgba(26,24,20,0.08); --dur: 0.55s;
+    --driving-accent: #1A4A8A;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #1A1814; --surface: #232019; --ink: #F0EDE4; --ink-2: #AAA59C; --ink-3: #6A655E;
       --accent: #7EC898; --accent-light: #173404; --border: rgba(240,237,228,0.10);
       --shadow: 0 2px 24px rgba(0,0,0,0.40);
+      --driving-accent: #5B9BD5;
     }
   }
+
   body {
     font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink);
     min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-    padding: 2rem 1rem 4rem;
+    padding: 2rem 1rem 3rem; user-select: none;
+    transition: background 0.4s;
   }
+
+  /* driving mode body tint */
+  body.driving { background: #0D1F3C; }
+  @media (prefers-color-scheme: dark) { body.driving { background: #0A1628; } }
+
   header { text-align: center; margin-bottom: 2.5rem; }
   header h1 { font-family: 'Lora', serif; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
   header p { font-size: 0.85rem; color: var(--ink-3); margin-top: 0.35rem; }
+  body.driving header h1 { color: #E8F0FB; }
+  body.driving header p  { color: #7A9CC8; }
 
+  /* ── Progress ── */
   .progress-wrap { width: min(520px,100%); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 12px; }
   .progress-bar { flex: 1; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.3s; }
+  body.driving .progress-fill { background: #5B9BD5; }
   .progress-label { font-size: 0.8rem; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-  .scene { width: min(520px,100%); height: 320px; perspective: 1000px; cursor: pointer; margin-bottom: 1.5rem; }
+  /* ── Countdown ring ── */
+  .countdown-wrap {
+    width: min(520px,100%); margin-bottom: 0.6rem;
+    display: none; align-items: center; gap: 10px;
+  }
+  .countdown-wrap.visible { display: flex; }
+  .countdown-label { font-size: 0.75rem; color: #7A9CC8; white-space: nowrap; }
+  .countdown-bar { flex: 1; height: 4px; background: rgba(91,155,213,0.2); border-radius: 99px; overflow: hidden; }
+  .countdown-fill {
+    height: 100%; background: #5B9BD5; border-radius: 99px;
+    width: 100%;
+    transition: width linear;
+  }
+
+  /* ── Card ── */
+  .scene { width: min(520px,100%); height: 340px; perspective: 1000px; cursor: pointer; margin-bottom: 1.5rem; }
   .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform var(--dur) cubic-bezier(0.4,0,0.2,1); }
   .card.flipped { transform: rotateY(180deg); }
+
   .face {
     position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
     background: var(--surface); border-radius: 20px; border: 1px solid var(--border);
     box-shadow: var(--shadow); padding: 2.5rem 2.25rem; display: flex; flex-direction: column;
+    transition: background 0.4s, border-color 0.4s;
   }
+  body.driving .face { background: #152340; border-color: rgba(91,155,213,0.2); }
+
   .face-front { justify-content: center; align-items: center; text-align: center; }
   .face-back  { transform: rotateY(180deg); justify-content: space-between; }
-  .face-label { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 1rem; }
-  .meaning-text { font-family: 'Lora', serif; font-size: 1.35rem; line-height: 1.55; color: var(--ink); }
-  .flip-hint { margin-top: 1.5rem; font-size: 0.75rem; color: var(--ink-3); }
-  .back-word { font-family: 'Lora', serif; font-size: 2rem; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); line-height: 1.2; }
-  .back-pos { display: inline-block; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); background: var(--accent-light); padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
-  .back-example { font-family: 'Lora', serif; font-style: italic; font-size: 1rem; line-height: 1.65; color: var(--ink-2); border-left: 2px solid var(--accent); padding-left: 1rem; margin-top: auto; }
-  .back-example-label { font-family: 'DM Sans', sans-serif; font-style: normal; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.5rem; display: block; }
 
+  .face-label { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 0.85rem; }
+  body.driving .face-label { color: #4A7FAA; }
+
+  .meaning-text { font-family: 'Lora', serif; font-size: 1.35rem; line-height: 1.55; color: var(--ink); }
+  body.driving .meaning-text { color: #C8DEFA; }
+
+  .swipe-hint { margin-top: 1.5rem; font-size: 0.75rem; color: var(--ink-3); display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .swipe-hint span { opacity: 0.5; }
+  body.driving .swipe-hint { color: #4A7FAA; }
+
+  .word-row { display: flex; align-items: center; gap: 10px; }
+  .back-word { font-family: 'Lora', serif; font-size: 2rem; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); line-height: 1.2; }
+  body.driving .back-word { color: #E8F4FF; }
+
+  .back-pos { display: inline-block; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); background: var(--accent-light); padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
+  body.driving .back-pos { color: #5B9BD5; background: rgba(91,155,213,0.12); }
+
+  .back-example { font-family: 'Lora', serif; font-style: italic; font-size: 0.95rem; line-height: 1.65; color: var(--ink-2); border-left: 2px solid var(--accent); padding-left: 1rem; margin-top: auto; }
+  body.driving .back-example { color: #8EB8E8; border-left-color: #3A6FA0; }
+
+  .example-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
+  .back-example-label { font-family: 'DM Sans', sans-serif; font-style: normal; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+  body.driving .back-example-label { color: #4A7FAA; }
+
+  /* ── Speak button ── */
+  .speak-btn {
+    flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+    border: 1px solid var(--border); background: var(--surface);
+    cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent; line-height: 1; padding: 0;
+  }
+  .speak-btn:hover { background: var(--accent-light); border-color: var(--accent); }
+  .speak-btn:active { transform: scale(0.9); }
+  .speak-btn.speaking { background: var(--accent-light); border-color: var(--accent); animation: pulse-ring 0.6s ease infinite; }
+  @keyframes pulse-ring {
+    0%,100% { box-shadow: 0 0 0 0px rgba(45,90,61,0.3); }
+    50%      { box-shadow: 0 0 0 4px rgba(45,90,61,0.15); }
+  }
+
+  /* ── Buttons ── */
   .controls { display: flex; align-items: center; gap: 12px; width: min(520px,100%); }
   .btn {
     height: 42px; padding: 0 1.25rem; border: 1px solid var(--border); background: var(--surface);
     color: var(--ink); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
     font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
     transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
   }
   .btn:hover:not(:disabled) { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
   .btn:active:not(:disabled) { transform: scale(0.97); }
   .btn:disabled { opacity: 0.3; cursor: not-allowed; }
   .btn-flip { flex: 1; background: var(--accent); border-color: var(--accent); color: white; }
   .btn-flip:hover { opacity: 0.88; }
+
   .row-btns { display: flex; gap: 10px; width: min(520px,100%); margin-top: 0.85rem; }
   .btn-sm { height: 36px; font-size: 0.75rem; padding: 0 0.85rem; border-radius: 8px; flex: 1; }
 
+  /* driving mode button */
+  .btn-drive {
+    background: #1A4A8A; border-color: #1A4A8A; color: white;
+  }
+  .btn-drive:hover { opacity: 0.88; background: #1A4A8A; }
+  body.driving .btn-drive { background: #E05C2A; border-color: #E05C2A; color: white; }
+  body.driving .btn-drive:hover { opacity: 0.88; background: #E05C2A; }
+
+  /* driving mode — other buttons dimmed */
+  body.driving .btn:not(.btn-drive) {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(91,155,213,0.2);
+    color: #5B9BD5;
+  }
+  body.driving .btn-flip {
+    background: rgba(91,155,213,0.15);
+    border-color: rgba(91,155,213,0.3);
+    color: #8EB8E8;
+  }
+
   .keyboard-hint { text-align: center; font-size: 0.72rem; color: var(--ink-3); margin-top: 1rem; }
+  body.driving .keyboard-hint { color: #3A5A7A; }
   kbd { display: inline-block; padding: 1px 5px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.65rem; color: var(--ink-3); }
 
+  /* ── Status ── */
   .status { text-align: center; padding: 3rem 1rem; color: var(--ink-2); font-size: 0.9rem; line-height: 1.9; width: min(480px,100%); }
   .status.error { color: #A32D2D; }
   .dot-pulse { display: inline-flex; gap: 5px; margin-top: 0.75rem; }
-  .dot-pulse span { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); animation: pulse 1.2s infinite ease-in-out; }
+  .dot-pulse span { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); animation: dp 1.2s infinite ease-in-out; }
   .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
   .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes pulse { 0%,80%,100%{opacity:0.3;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
+  @keyframes dp { 0%,80%,100%{opacity:0.3;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
+
+  /* driving mode toast */
+  .toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    background: #1A4A8A; color: white; padding: 0.6rem 1.25rem;
+    border-radius: 99px; font-size: 0.82rem; font-weight: 500;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
+    z-index: 99;
+  }
+  .toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>English Flashcards</h1>
+  <h1>🗂️ English Flashcards</h1>
   <p id="subtitle">Loading Vocab sheet…</p>
 </header>
 
@@ -92,13 +192,168 @@
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-/* Published CSV URL — works from https:// pages, CORS-free */
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPzLzjhM4w4SaXPEAzRcFEXUgirKWsT8XNY4ju33WPqZg-vuZoi1Kpj2TCCSDdqoA6oTPkknLvjKle/pub?gid=271629694&single=true&output=csv';
 
 let cards=[], current=0, flipped=false, colKeys=null;
 
-/* ── CSV parser ── */
+/* ══ Driving mode state ══ */
+let drivingMode   = false;
+let driveTimer    = null;   // setTimeout handle
+let drivePhase    = 'wait'; // 'wait' | 'reveal' | 'next'
+let cdInterval    = null;   // setInterval for countdown bar
+let cdStart       = 0;
+let cdDuration    = 0;
+
+const WAIT_MS   = 5000;   // show meaning → auto flip
+const REVEAL_MS = 10000;  // show word+sound → auto next
+
+/* ══ Toast ══ */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ══ Countdown bar ══ */
+function startCountdown(ms, label) {
+  const wrap = document.getElementById('cdWrap');
+  const fill = document.getElementById('cdFill');
+  const lbl  = document.getElementById('cdLabel');
+  if (!wrap || !fill) return;
+
+  wrap.classList.add('visible');
+  if (lbl) lbl.textContent = label;
+  cdStart    = Date.now();
+  cdDuration = ms;
+
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+
+  clearInterval(cdInterval);
+  cdInterval = setInterval(() => {
+    const elapsed  = Date.now() - cdStart;
+    const pct      = Math.max(0, 100 - (elapsed / cdDuration) * 100);
+    fill.style.transition = 'none';
+    fill.style.width = pct + '%';
+    if (pct <= 0) clearInterval(cdInterval);
+  }, 50);
+}
+
+function stopCountdown() {
+  clearInterval(cdInterval);
+  const wrap = document.getElementById('cdWrap');
+  if (wrap) wrap.classList.remove('visible');
+}
+
+/* ══ Web Speech API ══ */
+function speak(text, btnId) {
+  if (!window.speechSynthesis) return Promise.resolve();
+  window.speechSynthesis.cancel();
+
+  return new Promise(resolve => {
+    const btn = btnId ? document.getElementById(btnId) : null;
+    if (btn) btn.classList.add('speaking');
+
+    const utter    = new SpeechSynthesisUtterance(text);
+    utter.lang     = 'en-US';
+    utter.rate     = 0.9;
+    utter.onend    = () => { if (btn) btn.classList.remove('speaking'); resolve(); };
+    utter.onerror  = () => { if (btn) btn.classList.remove('speaking'); resolve(); };
+    window.speechSynthesis.speak(utter);
+  });
+}
+
+/* ══ Driving mode engine ══ */
+function driveStep() {
+  if (!drivingMode) return;
+  clearTimeout(driveTimer);
+
+  if (!flipped) {
+    /* Phase 1 — meaning is showing, wait 5s then flip */
+    drivePhase = 'wait';
+    startCountdown(WAIT_MS, 'Flipping in…');
+    driveTimer = setTimeout(() => {
+      if (!drivingMode) return;
+      driveFlip();
+    }, WAIT_MS);
+  } else {
+    /* Phase 2 — word is showing, speak then wait then next */
+    drivePhase = 'reveal';
+    startCountdown(REVEAL_MS, 'Next card in…');
+    driveSpeak().then(() => {
+      if (!drivingMode) return;
+      driveTimer = setTimeout(() => {
+        if (!drivingMode) return;
+        goNext();
+      }, Math.max(0, REVEAL_MS - (Date.now() - cdStart)));
+    });
+  }
+}
+
+async function driveSpeak() {
+  const card = cards[current];
+  if (!card) return;
+  const k       = detectKeys(card);
+  const word    = card[k.word]    || '';
+  const example = card[k.example] || '';
+
+  await speak(word, 'speakWord');
+  await delay(1000);
+  if (!drivingMode) return;
+  if (example) {
+    await speak('Example. ' + example, 'speakExample');
+  }
+}
+
+function delay(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+function driveFlip() {
+  flipped = true;
+  const c = document.getElementById('card');
+  const b = document.getElementById('flipBtn');
+  if (c) c.classList.add('flipped');
+  if (b) b.textContent = 'Show meaning';
+  driveStep();  // kick off phase 2
+}
+
+function goNext() {
+  if (current >= cards.length - 1) {
+    /* end of deck */
+    stopDriving();
+    showToast('🎉 All cards done!');
+    return;
+  }
+  go(1);
+  /* go() calls render() → re-attach events, then we start phase 1 */
+  setTimeout(driveStep, 300);  // give slide animation time
+}
+
+function startDriving() {
+  drivingMode = true;
+  document.body.classList.add('driving');
+  showToast('🚗 Driving mode on');
+  if (flipped) { flipped = false; render(); }
+  setTimeout(driveStep, 400);
+}
+
+function stopDriving() {
+  drivingMode = false;
+  document.body.classList.remove('driving');
+  clearTimeout(driveTimer);
+  stopCountdown();
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  render();
+  showToast('Driving mode off');
+}
+
+/* ══ CSV parser ══ */
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   const parseRow = row => {
@@ -114,7 +369,6 @@ function parseCSV(text) {
     return out;
   };
   const headers = parseRow(lines[0]).map(h => h.toLowerCase().trim());
-  console.log('Headers:', headers);
   return lines.slice(1).filter(l => l.trim()).map(l => {
     const vals=parseRow(l), obj={};
     headers.forEach((h,i) => obj[h] = vals[i] !== undefined ? vals[i].trim() : '');
@@ -122,7 +376,7 @@ function parseCSV(text) {
   }).filter(r => Object.values(r).some(v => v));
 }
 
-/* ── Column detection ── */
+/* ══ Column detection ══ */
 function findCol(hs, aliases) {
   for (const a of aliases) { const h=hs.find(k=>k.includes(a)); if (h!==undefined) return h; }
   return '';
@@ -136,75 +390,186 @@ function detectKeys(sample) {
     example: findCol(hs, ['example','sentence','usage','ex']),
     pos:     findCol(hs, ['pos','part','type','品詞','class']),
   };
-  console.log('Mapped columns:', colKeys);
   return colKeys;
 }
 
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;'); }
 function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
 
+/* ══ Flip ══ */
 function doFlip() {
+  if (drivingMode) return;  // manual flip disabled in driving mode
   flipped = !flipped;
+  window.speechSynthesis && window.speechSynthesis.cancel();
   const c=document.getElementById('card'), b=document.getElementById('flipBtn');
   if (c) c.classList.toggle('flipped', flipped);
   if (b) b.textContent = flipped ? 'Show meaning' : 'Reveal word';
 }
-function go(d) { current=Math.max(0,Math.min(cards.length-1,current+d)); flipped=false; render(); }
 
+/* ══ Navigate with slide animation ══ */
+function go(d) {
+  const next = current + d;
+  if (next < 0 || next >= cards.length) return;
+  window.speechSynthesis && window.speechSynthesis.cancel();
+
+  const cardEl = document.getElementById('card');
+  if (!cardEl) return;
+
+  const OUT_PX = window.innerWidth < 600 ? 340 : 560;
+  const outX   = d > 0 ? -OUT_PX : OUT_PX;
+  const inX    = d > 0 ?  OUT_PX : -OUT_PX;
+
+  cardEl.style.transition = 'transform 0.25s cubic-bezier(0.4,0,1,1)';
+  cardEl.style.transform  = `translateX(${outX}px)`;
+
+  setTimeout(() => {
+    current = next; flipped = false; render();
+    const newCard = document.getElementById('card');
+    if (!newCard) return;
+    newCard.style.transition = 'none';
+    newCard.style.transform  = `translateX(${inX}px)`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      newCard.style.transition = 'transform 0.28s cubic-bezier(0,0,0.2,1)';
+      newCard.style.transform  = 'translateX(0px)';
+    }));
+  }, 220);
+}
+
+/* ══ Swipe ══ */
+function attachSwipe(el) {
+  let startX=0, startY=0, dragging=false, moved=false;
+  const THRESHOLD=60, MAX_DRAG=120;
+
+  el.addEventListener('touchstart', e => {
+    startX=e.touches[0].clientX; startY=e.touches[0].clientY;
+    dragging=true; moved=false;
+    const card=document.getElementById('card');
+    if (card) card.style.transition='none';
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const dx=e.touches[0].clientX-startX, dy=e.touches[0].clientY-startY;
+    if (!moved && Math.abs(dy)>Math.abs(dx)) { dragging=false; return; }
+    moved=true;
+    if (drivingMode) return;  // no drag in driving mode
+    const clamped=Math.sign(dx)*Math.min(Math.abs(dx),MAX_DRAG);
+    const card=document.getElementById('card');
+    if (card) card.style.transform=`translateX(${clamped}px)${flipped?' rotateY(180deg)':''}`;
+  }, { passive: true });
+
+  const onEnd = e => {
+    if (!dragging) return; dragging=false;
+    if (drivingMode) return;
+    const dx=(e.changedTouches?e.changedTouches[0].clientX:e.clientX)-startX;
+    if (!moved || Math.abs(dx)<THRESHOLD) {
+      const card=document.getElementById('card');
+      if (card) { card.style.transition='transform 0.2s cubic-bezier(0.4,0,0.2,1)'; card.style.transform=flipped?'translateX(0px) rotateY(180deg)':'translateX(0px)'; }
+      return;
+    }
+    if (dx>0) go(-1); else go(1);
+  };
+  el.addEventListener('touchend',    onEnd, { passive: true });
+  el.addEventListener('touchcancel', onEnd, { passive: true });
+}
+
+/* ══ Keyboard ══ */
+document.addEventListener('keydown', e => {
+  if (!cards.length) return;
+  if (drivingMode) return;
+  if (e.key===' '||e.key==='Enter') { e.preventDefault(); doFlip(); }
+  if (e.key==='ArrowRight') go(1);
+  if (e.key==='ArrowLeft')  go(-1);
+});
+
+/* ══ Render ══ */
 function render() {
   const card=cards[current], k=detectKeys(card);
   const word=card[k.word]||'', meaning=card[k.meaning]||'', example=card[k.example]||'', pos=card[k.pos]||'';
-  const pct = ((current+1)/cards.length*100).toFixed(1);
+  const pct=((current+1)/cards.length*100).toFixed(1);
+  const hasSpeech = !!window.speechSynthesis;
 
   document.getElementById('app').innerHTML = `
     <div class="progress-wrap">
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
       <span class="progress-label">${current+1} / ${cards.length}</span>
     </div>
+
+    <div class="countdown-wrap" id="cdWrap">
+      <span class="countdown-label" id="cdLabel">Next card in…</span>
+      <div class="countdown-bar"><div class="countdown-fill" id="cdFill"></div></div>
+    </div>
+
     <div class="scene" id="scene">
       <div class="card${flipped?' flipped':''}" id="card">
+
         <div class="face face-front">
           <div class="face-label">meaning</div>
           <p class="meaning-text">${meaning ? esc(meaning) : '<em style="opacity:0.35">—</em>'}</p>
-          <div class="flip-hint">↻ tap to reveal the word</div>
+          <div class="swipe-hint"><span>←</span> swipe to navigate <span>→</span></div>
         </div>
+
         <div class="face face-back">
           <div>
             <div class="face-label">word</div>
-            <div class="back-word">${esc(word)}</div>
+            <div class="word-row">
+              <div class="back-word">${esc(word)}</div>
+              ${hasSpeech && word ? `<button class="speak-btn" id="speakWord" title="Pronounce word">🔊</button>` : ''}
+            </div>
             ${pos ? `<span class="back-pos">${esc(pos)}</span>` : ''}
           </div>
-          ${example ? `<div class="back-example"><span class="back-example-label">example</span>${esc(example)}</div>` : ''}
+          ${example ? `
+          <div class="back-example">
+            <div class="example-header">
+              <span class="back-example-label">example</span>
+              ${hasSpeech ? `<button class="speak-btn" id="speakExample" title="Pronounce example">🔊</button>` : ''}
+            </div>
+            ${esc(example)}
+          </div>` : ''}
         </div>
+
       </div>
     </div>
+
     <div class="controls">
-      <button class="btn" id="prevBtn" ${current===0?'disabled':''}>← Prev</button>
-      <button class="btn btn-flip" id="flipBtn">${flipped?'Show meaning':'Reveal word'}</button>
-      <button class="btn" id="nextBtn" ${current===cards.length-1?'disabled':''}>Next →</button>
+      <button class="btn" id="prevBtn" ${current===0||drivingMode?'disabled':''}>← Prev</button>
+      <button class="btn btn-flip" id="flipBtn" ${drivingMode?'disabled':''}>${flipped?'Show meaning':'Reveal word'}</button>
+      <button class="btn" id="nextBtn" ${current===cards.length-1||drivingMode?'disabled':''}>Next →</button>
     </div>
     <div class="row-btns">
-      <button class="btn btn-sm" id="shuffleBtn">⇄ Shuffle</button>
-      <button class="btn btn-sm" id="reloadBtn">↺ Sync sheet</button>
+      <button class="btn btn-sm btn-drive" id="driveBtn">${drivingMode ? '⏹ Stop driving' : '🚗 Driving mode'}</button>
+      <button class="btn btn-sm" id="reshuffleBtn" ${drivingMode?'disabled':''}>⇄ Reshuffle</button>
+      <button class="btn btn-sm" id="reloadBtn" ${drivingMode?'disabled':''}>↺ Sync</button>
     </div>
-    <p class="keyboard-hint"><kbd>Space</kbd> flip &nbsp;&nbsp; <kbd>←</kbd> prev &nbsp;&nbsp; <kbd>→</kbd> next</p>
+    <p class="keyboard-hint"><kbd>Space</kbd> flip &nbsp;&nbsp; <kbd>←</kbd><kbd>→</kbd> navigate</p>
   `;
 
-  document.getElementById('scene').addEventListener('click', doFlip);
-  document.getElementById('flipBtn').addEventListener('click', e=>{e.stopPropagation();doFlip();});
-  document.getElementById('prevBtn').addEventListener('click', ()=>go(-1));
-  document.getElementById('nextBtn').addEventListener('click', ()=>go(1));
-  document.getElementById('shuffleBtn').addEventListener('click', ()=>{ cards=shuffle(cards); current=0; flipped=false; render(); });
-  document.getElementById('reloadBtn').addEventListener('click', ()=>{ cards=[]; colKeys=null; init(); });
+  /* speak buttons */
+  const sw = document.getElementById('speakWord');
+  const se = document.getElementById('speakExample');
+  if (sw) sw.addEventListener('click', e => { e.stopPropagation(); speak(word, 'speakWord'); });
+  if (se) se.addEventListener('click', e => { e.stopPropagation(); speak('Example. ' + example, 'speakExample'); });
+
+  /* nav / flip */
+  document.getElementById('flipBtn').addEventListener('click', e => { e.stopPropagation(); doFlip(); });
+  document.getElementById('prevBtn').addEventListener('click', e => { e.stopPropagation(); go(-1); });
+  document.getElementById('nextBtn').addEventListener('click', e => { e.stopPropagation(); go(1); });
+  document.getElementById('reshuffleBtn').addEventListener('click', () => { if(drivingMode)return; cards=shuffle(cards); current=0; flipped=false; render(); });
+  document.getElementById('reloadBtn').addEventListener('click',    () => { if(drivingMode)return; cards=[]; colKeys=null; init(); });
+  document.getElementById('driveBtn').addEventListener('click',     e => { e.stopPropagation(); drivingMode ? stopDriving() : startDriving(); });
+
+  /* tap to flip */
+  const scene = document.getElementById('scene');
+  let tapOk = true;
+  scene.addEventListener('touchstart', () => { tapOk=true;  }, { passive: true });
+  scene.addEventListener('touchmove',  () => { tapOk=false; }, { passive: true });
+  scene.addEventListener('touchend',   () => { if (tapOk && !drivingMode) doFlip(); }, { passive: true });
+  scene.addEventListener('click', () => { if (!drivingMode) doFlip(); });
+
+  attachSwipe(scene);
 }
 
-document.addEventListener('keydown', e => {
-  if (!cards.length) return;
-  if (e.key===' '||e.key==='Enter') { e.preventDefault(); doFlip(); }
-  if (e.key==='ArrowRight') go(1);
-  if (e.key==='ArrowLeft') go(-1);
-});
-
+/* ══ Boot ══ */
 async function init() {
   document.getElementById('app').innerHTML = `<div class="status">Fetching your vocabulary…<div class="dot-pulse"><span></span><span></span><span></span></div></div>`;
   document.getElementById('subtitle').textContent = 'Loading Vocab sheet…';
@@ -212,16 +577,18 @@ async function init() {
     const res = await fetch(CSV_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
-    cards = parseCSV(text);
-    if (!cards.length) throw new Error('Sheet loaded but no rows found.');
+    const raw = parseCSV(text);
+    if (!raw.length) throw new Error('Sheet loaded but no rows found.');
+    cards = shuffle(raw);
     colKeys = null;
-    document.getElementById('subtitle').textContent = `${cards.length} cards · live from Google Sheets ✓`;
+    document.getElementById('subtitle').textContent = `${cards.length} cards · shuffled ✓`;
     render();
   } catch (err) {
     document.getElementById('subtitle').textContent = 'Could not load';
     document.getElementById('app').innerHTML = `
       <div class="status error">
         <strong>Could not load the sheet.</strong><br>${esc(err.message)}<br><br>
+        <small>Open via <strong>http://</strong> not file:// · Make sure the sheet is published</small><br><br>
         <button class="btn" onclick="init()" style="margin:0 auto">↺ Try again</button>
       </div>`;
   }
