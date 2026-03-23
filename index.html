@@ -2,10 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>English Flashcards</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇬🇧</text></svg>">
-
+<title>English Flashcards</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>Open book</text></svg>">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -509,7 +507,13 @@ function render(){
         <div class="face face-front">
           <div class="face-label">meaning</div>
           <p class="meaning-text">${meaning?esc(meaning):'<em style="opacity:0.35">—</em>'}</p>
-          <div class="swipe-hint"><span>←</span> swipe to navigate <span>→</span></div>
+          ${word?`
+          <div class="word-row" style="justify-content:center;margin-top:1.25rem;">
+            <div class="back-word">${esc(word)}</div>
+            ${hasSpeech?`<button class="speak-btn" id="speakWordFront" title="Pronounce word">🔊</button>`:''}
+          </div>
+          ${pos?`<span class="back-pos">${esc(pos)}</span>`:''}`:''}
+          <div class="swipe-hint" style="margin-top:1rem;"><span>←</span> swipe to navigate <span>→</span></div>
         </div>
         <div class="face face-back">
           <div>
@@ -540,11 +544,16 @@ function render(){
     <p class="keyboard-hint"><kbd>Space</kbd> flip &nbsp;&nbsp; <kbd>←</kbd><kbd>→</kbd> navigate</p>
   `;
 
-  /* speak buttons */
-  const sw=document.getElementById('speakWord');
-  const se=document.getElementById('speakExample');
-  if(sw) sw.addEventListener('click',e=>{e.stopPropagation();speak(word,'speakWord');});
-  if(se) se.addEventListener('click',e=>{e.stopPropagation();speak('Example. '+example,'speakExample');});
+  /* speak buttons — stop touch events from bubbling to scene (prevents card flip) */
+  function attachSpeakBtn(id, text) {
+    const btn=document.getElementById(id); if(!btn) return;
+    btn.addEventListener('click',      e=>{e.stopPropagation(); speak(text, id);});
+    btn.addEventListener('touchstart', e=>{e.stopPropagation();}, {passive:true});
+    btn.addEventListener('touchend',   e=>{e.stopPropagation();}, {passive:true});
+  }
+  attachSpeakBtn('speakWordFront', word);
+  attachSpeakBtn('speakWord',      word);
+  attachSpeakBtn('speakExample',   'Example. '+example);
 
 document.getElementById('reshuffleBtn').addEventListener('click',()=>{if(drivingMode)return;cards=shuffle(cards);current=0;flipped=false;render();});
   document.getElementById('reloadBtn').addEventListener('click',  ()=>{if(drivingMode)return;cards=[];colKeys=null;init();});
