@@ -201,7 +201,16 @@ function speak(text, btnId) {
     if (btn) btn.classList.add('speaking');
     const u=new SpeechSynthesisUtterance(text);
     u.lang='en-US'; u.rate=0.9;
-    u.onend=u.onerror=()=>{ if(btn) btn.classList.remove('speaking'); resolve(); };
+    let done=false;
+    const finish=()=>{
+      if(done)return; done=true;
+      clearTimeout(fallback);
+      if(btn)btn.classList.remove('speaking');
+      resolve();
+    };
+    u.onend=u.onerror=finish;
+    /* fallback: resolve after estimated duration in case onend never fires (Chrome bug) */
+    const fallback=setTimeout(finish, Math.max(5000, text.length*80+2000));
     window.speechSynthesis.speak(u);
   });
 }
