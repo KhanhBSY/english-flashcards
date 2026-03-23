@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🗂️ English Flashcards</title>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>English Flashcards</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇬🇧</text></svg>">
+
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -157,6 +158,7 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPzLzjhM4w4SaX
 
 let cards=[], current=0, flipped=false, colKeys=null;
 let drivingMode=false, driveTimer=null, cdInterval=null, cdStart=0, cdDuration=0;
+let drivePhaseToken=0;
 const WAIT_MS=5000, REVEAL_MS=10000;
 
 /* ══ Toast ══ */
@@ -262,6 +264,7 @@ function drivePhase1() {
 /* Phase 2: word visible → speak → wait remaining time → next card */
 async function drivePhase2() {
   if (!drivingMode) return;
+  const myToken=++drivePhaseToken;
   const phaseStart=Date.now();
   startCountdown(REVEAL_MS, 'Next card in…');
 
@@ -272,21 +275,21 @@ async function drivePhase2() {
     const word=card[k.word]||'';
     const example=card[k.example]||'';
     await speak(word, 'speakWord');
-    if (!drivingMode) return;
+    if (!drivingMode||drivePhaseToken!==myToken) return;
     await delay(1000);
-    if (!drivingMode) return;
+    if (!drivingMode||drivePhaseToken!==myToken) return;
     if (example) {
       await speak('Example. '+example, 'speakExample');
     }
   }
 
-  if (!drivingMode) return;
+  if (!drivingMode||drivePhaseToken!==myToken) return;
 
   /* wait out whatever remains of REVEAL_MS */
   const elapsed=Date.now()-phaseStart;
   const remaining=Math.max(0, REVEAL_MS-elapsed);
   driveTimer=setTimeout(()=>{
-    if (!drivingMode) return;
+    if (!drivingMode||drivePhaseToken!==myToken) return;
     if (current>=cards.length-1) {
       stopDriving();
       showToast('🎉 All cards done!');
@@ -369,20 +372,32 @@ function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Mat
 
 /* ══ Manual flip ══ */
 function doFlip(){
-  if(drivingMode)return;
   flipped=!flipped;
   window.speechSynthesis&&window.speechSynthesis.cancel();
   const c=document.getElementById('card'),b=document.getElementById('flipBtn');
   if(c)c.classList.toggle('flipped',flipped);
   if(b)b.textContent=flipped?'Show meaning':'Reveal word';
+
+  if(drivingMode){
+    drivePhaseToken++;
+    clearTimeout(driveTimer);
+    stopCountdown();
+    if(flipped){
+      /* user revealed the word — speak it then start "next card" countdown */
+      drivePhase2();
+    } else {
+      /* user flipped back to meaning — restart "reveal word" countdown */
+      drivePhase1();
+    }
+  }
 }
 
 /* ══ Manual navigate ══ */
 function go(d){
-  if(drivingMode)return;
   const next=current+d;
   if(next<0||next>=cards.length)return;
   window.speechSynthesis&&window.speechSynthesis.cancel();
+  if(drivingMode){ drivePhaseToken++; clearTimeout(driveTimer); stopCountdown(); }
   const cardEl=document.getElementById('card');
   if(!cardEl)return;
   const OUT_PX=window.innerWidth<600?340:560;
@@ -398,6 +413,8 @@ function go(d){
       nc.style.transform='translateX(0px)';
       /* clear inline styles after slide so CSS flip class works */
       setTimeout(()=>{ nc.style.transform=''; nc.style.transition=''; }, 300);
+      /* in drive mode, restart phase 1 for the new card */
+      if(drivingMode) driveTimer=setTimeout(()=>drivePhase1(), 350);
     }));
   },220);
 }
@@ -427,17 +444,16 @@ function attachSwipe(el) {
     }
 
     if(!isHoriz){
-      /* vertical — let browser scroll, reset card */
+      /* vertical — let browser scroll, clear inline styles so CSS handles state */
       dragging=false;
       const card=document.getElementById('card');
-      if(card){card.style.transition='transform 0.2s';card.style.transform=flipped?'translateX(0px) rotateY(180deg)':'translateX(0px)';}
+      if(card){card.style.transition='';card.style.transform='';}
       return;
     }
 
     /* horizontal — prevent page scroll */
     e.preventDefault();
 
-    if(drivingMode)return;
     const clamped=Math.sign(dx)*Math.min(Math.abs(dx),MAX_DRAG);
     const card=document.getElementById('card');
     if(card) card.style.transform=`translateX(${clamped}px)${flipped?' rotateY(180deg)':''}`;
@@ -445,14 +461,14 @@ function attachSwipe(el) {
 
   const onEnd=e=>{
     if(!dragging)return; dragging=false;
-    if(!isHoriz||drivingMode){
-      const card=document.getElementById('card');
-      if(card){card.style.transition='transform 0.2s cubic-bezier(0.4,0,0.2,1)';card.style.transform=flipped?'translateX(0px) rotateY(180deg)':'translateX(0px)';}
+    const card=document.getElementById('card');
+    if(!isHoriz){
+      /* tap — clear inline styles so CSS .flipped class controls the flip */
+      if(card){card.style.transition='';card.style.transform='';}
       return;
     }
     const dx=(e.changedTouches?e.changedTouches[0].clientX:e.clientX)-startX;
     if(Math.abs(dx)<THRESHOLD){
-      const card=document.getElementById('card');
       if(card){card.style.transition='transform 0.2s cubic-bezier(0.4,0,0.2,1)';card.style.transform=flipped?'translateX(0px) rotateY(180deg)':'translateX(0px)';}
       return;
     }
@@ -518,7 +534,6 @@ function render(){
 
     <div class="controls">
       <button class="btn" id="prevBtn" ${current===0||drivingMode?'disabled':''}>← Prev</button>
-      <button class="btn btn-flip" id="flipBtn" ${drivingMode?'disabled':''}>${flipped?'Show meaning':'Reveal word'}</button>
       <button class="btn" id="nextBtn" ${current===cards.length-1||drivingMode?'disabled':''}>Next →</button>
     </div>
     <div class="row-btns">
@@ -535,7 +550,6 @@ function render(){
   if(sw) sw.addEventListener('click',e=>{e.stopPropagation();speak(word,'speakWord');});
   if(se) se.addEventListener('click',e=>{e.stopPropagation();speak('Example. '+example,'speakExample');});
 
-  document.getElementById('flipBtn').addEventListener('click',    e=>{e.stopPropagation();doFlip();});
   document.getElementById('prevBtn').addEventListener('click',    e=>{e.stopPropagation();go(-1);});
   document.getElementById('nextBtn').addEventListener('click',    e=>{e.stopPropagation();go(1);});
   document.getElementById('reshuffleBtn').addEventListener('click',()=>{if(drivingMode)return;cards=shuffle(cards);current=0;flipped=false;render();});
@@ -547,8 +561,8 @@ function render(){
   let tapOk=true;
   scene.addEventListener('touchstart',()=>{tapOk=true;},{passive:true});
   scene.addEventListener('touchmove', ()=>{tapOk=false;},{passive:true});
-  scene.addEventListener('touchend',  ()=>{if(tapOk&&!drivingMode)doFlip();},{passive:true});
-  scene.addEventListener('click',     ()=>{if(!drivingMode)doFlip();});
+  scene.addEventListener('touchend',  ()=>{if(tapOk)doFlip();},{passive:true});
+  scene.addEventListener('click',     ()=>doFlip());
 
   attachSwipe(scene);
 }
