@@ -532,10 +532,6 @@ function render(){
       </div>
     </div>
 
-    <div class="controls">
-      <button class="btn" id="prevBtn" ${current===0||drivingMode?'disabled':''}>← Prev</button>
-      <button class="btn" id="nextBtn" ${current===cards.length-1||drivingMode?'disabled':''}>Next →</button>
-    </div>
     <div class="row-btns">
       <button class="btn btn-sm btn-drive" id="driveBtn">${drivingMode?'⏹ Stop driving':'🚗 Driving mode'}</button>
       <button class="btn btn-sm" id="reshuffleBtn" ${drivingMode?'disabled':''}>⇄ Reshuffle</button>
@@ -550,19 +546,18 @@ function render(){
   if(sw) sw.addEventListener('click',e=>{e.stopPropagation();speak(word,'speakWord');});
   if(se) se.addEventListener('click',e=>{e.stopPropagation();speak('Example. '+example,'speakExample');});
 
-  document.getElementById('prevBtn').addEventListener('click',    e=>{e.stopPropagation();go(-1);});
-  document.getElementById('nextBtn').addEventListener('click',    e=>{e.stopPropagation();go(1);});
-  document.getElementById('reshuffleBtn').addEventListener('click',()=>{if(drivingMode)return;cards=shuffle(cards);current=0;flipped=false;render();});
+document.getElementById('reshuffleBtn').addEventListener('click',()=>{if(drivingMode)return;cards=shuffle(cards);current=0;flipped=false;render();});
   document.getElementById('reloadBtn').addEventListener('click',  ()=>{if(drivingMode)return;cards=[];colKeys=null;init();});
   document.getElementById('driveBtn').addEventListener('click',   e=>{e.stopPropagation();drivingMode?stopDriving():startDriving();});
 
   /* tap-to-flip (not after a swipe) */
   const scene=document.getElementById('scene');
-  let tapOk=true;
+  let tapOk=true, lastTouchFlip=0;
   scene.addEventListener('touchstart',()=>{tapOk=true;},{passive:true});
   scene.addEventListener('touchmove', ()=>{tapOk=false;},{passive:true});
-  scene.addEventListener('touchend',  ()=>{if(tapOk)doFlip();},{passive:true});
-  scene.addEventListener('click',     ()=>doFlip());
+  scene.addEventListener('touchend',  ()=>{if(tapOk){lastTouchFlip=Date.now();doFlip();}},{passive:true});
+  /* ignore the synthetic click that fires ~300ms after touchend on mobile */
+  scene.addEventListener('click',     ()=>{if(Date.now()-lastTouchFlip>300)doFlip();});
 
   attachSwipe(scene);
 }
