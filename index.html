@@ -320,6 +320,8 @@ function driveGoNext() {
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       newCard.style.transition='transform 0.28s cubic-bezier(0,0,0.2,1)';
       newCard.style.transform='translateX(0px)';
+      /* clear inline styles after slide so CSS flip class works */
+      setTimeout(()=>{ newCard.style.transform=''; newCard.style.transition=''; }, 300);
       /* start phase 1 after slide completes */
       driveTimer=setTimeout(()=>drivePhase1(), 350);
     }));
@@ -394,6 +396,8 @@ function go(d){
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       nc.style.transition='transform 0.28s cubic-bezier(0,0,0.2,1)';
       nc.style.transform='translateX(0px)';
+      /* clear inline styles after slide so CSS flip class works */
+      setTimeout(()=>{ nc.style.transform=''; nc.style.transition=''; }, 300);
     }));
   },220);
 }
