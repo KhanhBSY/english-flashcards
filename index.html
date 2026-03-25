@@ -508,12 +508,6 @@ function render(){
         <div class="face face-front">
           <div class="face-label">meaning</div>
           <p class="meaning-text">${meaning?esc(meaning):'<em style="opacity:0.35">—</em>'}</p>
-          ${word?`
-          <div class="word-row" style="justify-content:center;margin-top:1.25rem;">
-            <div class="back-word">${esc(word)}</div>
-            ${hasSpeech?`<button class="speak-btn" id="speakWordFront" title="Pronounce word">🔊</button>`:''}
-          </div>
-          ${pos?`<span class="back-pos">${esc(pos)}</span>`:''}`:''}
           <div class="swipe-hint" style="margin-top:1rem;"><span>←</span> swipe to navigate <span>→</span></div>
         </div>
         <div class="face face-back">
@@ -554,7 +548,7 @@ function render(){
   }
   attachSpeakBtn('speakWordFront', word);
   attachSpeakBtn('speakWord',      word);
-  attachSpeakBtn('speakExample',   'Example. '+example);
+  attachSpeakBtn('speakExample',   example);
 
 document.getElementById('reshuffleBtn').addEventListener('click',()=>{if(drivingMode)return;cards=shuffle(cards);current=0;flipped=false;render();});
   document.getElementById('reloadBtn').addEventListener('click',  ()=>{if(drivingMode)return;cards=[];colKeys=null;init();});
