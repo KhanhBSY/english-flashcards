@@ -274,12 +274,6 @@ async function drivePhase2() {
     const word=card[k.word]||'';
     const example=card[k.example]||'';
     await speak(word, 'speakWord');
-    if (!drivingMode||drivePhaseToken!==myToken) return;
-    await delay(1000);
-    if (!drivingMode||drivePhaseToken!==myToken) return;
-    if (example) {
-      await speak('Example. '+example, 'speakExample');
-    }
   }
 
   if (!drivingMode||drivePhaseToken!==myToken) return;
